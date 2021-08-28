@@ -1,0 +1,68 @@
+version: '3.8'
+
+networks:
+  ebuyeralert: ~
+
+#volumes:
+#  mysql: ~
+#  rabbitmq: ~
+#  elasticsearch: ~
+
+services:
+
+  api:
+    hostname: api.ebuyeralert.local
+    container_name: ebuyeralert_api
+    build: ./
+    environment:
+      APP_ENV: dev
+      IGNORE_MIGRATIONS: 1
+    volumes:
+      - ~/.composer/cache:/root/.composer/cache
+      - ./:/app
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ebuyeralert
+      - traefik.http.routers.ebuyeralert-api-http.rule=Host(`api.ebuyeralert.local`)
+      - traefik.http.routers.ebuyeralert-api-http.entrypoints=http
+      - traefik.http.services.ebuyeralert-api.loadbalancer.server.port=80
+      - traefik.http.routers.ebuyeralert-api-http.middlewares=cors
+    depends_on:
+#      - mysql
+      - traefik
+#     - rabbit
+#      - elasticsearch
+    networks:
+      - ebuyeralert
+
+
+  traefik:
+    image: traefik:v2.4.5
+    container_name: ebuyeralert_traefik
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=ebuyeralert
+      - traefik.http.routers.traefik-public-http.rule=Host(`traefik.ebuyeralert.local`)
+      - traefik.http.routers.traefik-public-http.entrypoints=http
+      - traefik.http.routers.traefik-public-http.service=api@internal
+      - traefik.http.services.traefik-public.loadbalancer.server.port=8080
+      - traefik.http.middlewares.cors.headers.accesscontrolallowmethods=GET,OPTIONS,POST
+      - traefik.http.middlewares.cors.headers.accesscontrolalloworigin=*
+      - traefik.http.middlewares.cors.headers.accesscontrolallowcredentials=true
+      - traefik.http.middlewares.cors.headers.accesscontrolallowheaders=Origin, Content-Type, Accept, Authorization
+      - traefik.http.middlewares.cors.headers.accesscontrolmaxage=3600
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - --providers.docker
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.http.address=:80
+      - --accesslog
+      - --log
+      - --api
+    ports:
+      - target: 80
+        published: 80
+        mode: host
+    networks:
+      - ebuyeralert

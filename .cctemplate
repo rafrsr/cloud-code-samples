@@ -1,0 +1,13 @@
+{
+   "metadata":{
+      "version":"1"
+   },
+   "name": "Sample Repository",
+   "templates":[
+      {
+         "path":"/php-symfony",
+         "name":"Symfony",
+         "description":"Symfony empty application"
+      }
+   ]
+}

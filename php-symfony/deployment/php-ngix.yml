@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-nginx-deployment
+  namespace: ebuyeralert
+spec:
+  selector:
+    matchLabels:
+      app: php-nginx
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: php-nginx
+    spec:
+      containers:
+        - name: php-nginx
+          image: rafrsr/ebuyeralert:latest
+          volumeMounts:
+            - mountPath: /app
+              readOnly: true
+              mountPropagation: HostToContainer
+              name: app
+          ports:
+            - containerPort: 80
+      volumes:
+        - name: app
+          hostPath:
+            path: ./
+
